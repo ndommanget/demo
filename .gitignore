@@ -1,0 +1,8 @@
+# All this should be ignored at commit.
+videos/
+images/
+src/*.[od]
+src/*~
+src/Demo
+*.DS_Store
+

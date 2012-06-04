@@ -1,0 +1,13 @@
+#!/bin/sh
+
+IMG_DIR=../images
+VIDEO_DIR=../videos
+for i in `ls $IMG_DIR/*.ppm`
+do
+    x=`echo $i | sed s/\.ppm//g`
+    ppm2tiff $i $x.tif
+done
+
+ffmpeg -r 30 -b 2048 -sameq -i $IMG_DIR/render%4d.tif $VIDEO_DIR/$1.mp4
+
+rm -r $IMG_DIR/*

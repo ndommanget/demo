@@ -2387,7 +2387,7 @@ unsigned int Simulation::drawSolids()
     unsigned int storedObjectSolids=scene.storeObject(objectSolids);
     unsigned int solidsID=scene.addObjectToDraw(storedObjectSolids);  
     scene.setDrawnObjectShader(solidsID, defaultShader);
-    float shade=0.2;
+    float shade=0.8;
     float grey[]={shade*0.8, shade*0.85, shade*1.0, 0.6};
     scene.setDrawnObjectColor(solidsID, grey);
     scene.setDrawnObjectTransparency(solidsID, true);

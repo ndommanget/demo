@@ -58,6 +58,7 @@ class Application
         bool movePressed[6];            // Ctl key pressed (x,-x,y,-y,z,-z)
 
         // Additional data
+        bool recording;                 // True if recording takes place
         Shaders shaders;                // Shaders to render the scene
         Camera camera;                  // Camera to watch the scene
         Scene scene;                    // Scene to draw
@@ -85,7 +86,7 @@ class Application
     public:
 
         // Constructors / destructor
-        Application();
+        Application(bool recording);
         ~Application();
 
         // Application modes
@@ -104,7 +105,7 @@ class Application
         void moveScene();
         void setSimpleFloor();
         void rotateCamera();
-        void setSimulation(); 
+        void setSimulation(unsigned int cellsNbWidth, unsigned int particlesDensity); 
 };
 
 

@@ -428,7 +428,7 @@ void Application::renderFrame() const
     // Draws this->simulation
     if (this->simulation!=NULL) this->simulation->render();
 
-    //this->storeFrame();
+    if (this->recording) this->storeFrame();
     
     // Performs the buffer swap between the current shown buffer, 
     // and the one we just worked on (contains swapBuffers ?)
@@ -445,7 +445,7 @@ void Application::renderFrame() const
 
 
 // Default constructor
-Application::Application() : shaders(), camera(this->shaders), scene(this->shaders, this->camera)
+Application::Application(bool recording) : recording(recording), shaders(), camera(this->shaders), scene(this->shaders, this->camera)
 {
     this->init();
 }
@@ -763,22 +763,20 @@ void Application::rotateCamera()
 
 
 // Set the simulation to happen
-void Application::setSimulation()
+void Application::setSimulation(unsigned int cellsNbWidth, unsigned int particlesDensity)
 {    
     const float size=3.0;
     const float density=1000.0;
     const float viscosity=0.0;
-    unsigned int nbSamplesOneDir=40; 
+    unsigned int nbSamplesOneDir=cellsNbWidth; 
 
     const unsigned int nbSamplesX=nbSamplesOneDir;
-
     //const unsigned int nbSamplesY=nbSamplesOneDir*this->height/this->width;
     const unsigned int nbSamplesY=nbSamplesOneDir/2;
-
     const unsigned int nbSamplesZ=nbSamplesOneDir/3;
 
-    const unsigned int nbParticlesCoef=2; // On surface, nbSamples*4^nbParticlesCoefs particles 
-                              // In volume,  nbSamples*6^nbParticlesCoefs particles
+    const unsigned int nbParticlesCoef=particlesDensity; // nbSamples*8^nbParticlesCoefs particles
+
     const bool solidWalls=true;
 
     this->simulation=new Simulation(shaders, camera, scene, shaders.getLightingShader(), shaders.getSpriteShader(), size, solidWalls, density, viscosity, this->dtSimulation, nbSamplesX, nbSamplesY, nbSamplesZ, nbParticlesCoef);

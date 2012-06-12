@@ -61,14 +61,19 @@ void buildPlane(Object & object, float width, float length)
     // The 3 vertices of a triangle
     float w=width/2.0;
     float l=length/2.0;
-    float vertices[]={-w, 0.0, l,  1.0,
-	                    w,  0.0, l,  1.0,
-	                    -w, 0.0, -l, 1.0,
-	                    w,  0.0, -l, 1.0};
+    float vertices[]={-w, 0.0,  l, 1.0,
+	                   w, 0.0,  l, 1.0,
+	                   w, 0.0, -l, 1.0,
+	                  -w, 0.0, -l, 1.0};
+    float k=1.0;
+    float uvs[]={0.0, 0.0,
+                 k*w, 0.0,
+                 k*w, k*l,
+                 0.0, k*l};
 
     // The 3 indices of the vertices to draw the face
-    unsigned int indices[]={0, 2, 3, // First triangle : top left
-    				                0, 1, 3}; // Second triangle : bottom right
+    unsigned int indices[]={0, 1, 2, // First triangle : top left
+    				        0, 2, 3}; // Second triangle : bottom right
 
     // One simple normal
 	  float normals[]={0.0, 1.0, 0.0,
@@ -79,6 +84,7 @@ void buildPlane(Object & object, float width, float length)
     // Sends the data into buffers on the GPU
     object.sendPrimitives(vertices, indices);
     object.sendNormals(normals);
+    object.sendUvs(uvs);
 }
 
 

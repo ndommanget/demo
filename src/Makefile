@@ -15,10 +15,9 @@ else
 endif
 
 CXX=g++
-COMPILER_FLAGS_WARN=-g -Wall -I.
+COMPILER_FLAGS_WARN=-g -Wall 
 
-SFML_INC = $(OPENGL_INC)
-INCLUDE= $(SFML_INC) -I../api
+INCLUDE= $(OPENGL_INC) -I../api -I.
 
 SFML_LIB = -lsfml-graphics -lsfml-window -lsfml-system
 LIBS= $(SFML_LIB) $(OPENGL_LIB)

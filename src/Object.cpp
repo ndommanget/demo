@@ -150,14 +150,11 @@ void Object::sendPrimitives(const float * const vertices, const unsigned int * c
     // Specifies from where and how to read the data in the bound buffer
     glVertexAttribPointer(attributePosition, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid *)0);
 
-    if (this->primitivesType!=GL_POINTS)
-    {
-        // Binds the other vbo
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indicesVboId); 
-        // Loads up the indices of the vertices
-        if (dynamicIndices) glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->nbIndices*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW);
-        else                glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->nbIndices*sizeof(unsigned int), indices, GL_STATIC_DRAW);
-    }
+    // Binds the other vbo
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indicesVboId); 
+    // Loads up the indices of the vertices
+    if (dynamicIndices) glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->nbIndices*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW);
+    else                glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->nbIndices*sizeof(unsigned int), indices, GL_STATIC_DRAW);
     
     // Unbinds the vao
     glBindVertexArray(0);
@@ -255,7 +252,7 @@ void Object::updateVertices(const float * const vertices, bool dynamic) const
 
 
 // Updates primitives indices on GPU
-void Object::updateIndices(const float * const indices, bool dynamic) const
+void Object::updateIndices(const unsigned int * const indices, bool dynamic) const
 {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indicesVboId); 
     if (dynamic) glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->nbIndices*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW);
@@ -300,9 +297,6 @@ void Object::drawObject() const
 	// Binds the vao to draw (the vbos binds are stored in the vao, no need to redo them)
     glBindVertexArray(this->vaoId);
     
-    // Draw the elements stored by the vao
-    if (this->primitivesType==GL_POINTS)
-        glDrawArrays(this->primitivesType, 0, this->nbVertices);
-    else      
-        glDrawElements(this->primitivesType, this->nbIndices, GL_UNSIGNED_INT, 0);
+    // Draw the elements stored by the vao     
+    glDrawElements(this->primitivesType, this->nbIndices, GL_UNSIGNED_INT, 0);
 }

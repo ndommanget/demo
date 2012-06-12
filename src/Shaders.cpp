@@ -206,8 +206,8 @@ void Shaders::init()
 
     // Main material settings
     float ambient[]={1.0, 1.0, 1.0, 1.0}; float ka=0.01;
-    float diffuse[]={1.0, 1.0, 1.0, 1.0}; float kd=1.0;
-    float specular[]={1.0, 1.0, 1.0, 1.0}; float ks=2.0; float shininess=5.0;
+    float diffuse[]={1.0, 1.0, 1.0, 1.0}; float kd=2.0;
+    float specular[]={1.0, 1.0, 1.0, 1.0}; float ks=1.0; float shininess=10.0;
     this->setMaterial(ambient, diffuse, specular, ka, kd, ks, shininess);
      
     // Texture settings

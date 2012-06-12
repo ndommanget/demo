@@ -36,8 +36,8 @@ void Camera::init()
 {
     // View Data
     // Camera position and orientation  
-    float c[]={0.0, 1.5, 2.2}; // Camera position    
-    float aim[]={0.0, 1.5, 0.0}; // Where we look
+    float c[]={0.0, 1.0, 3.0}; // Camera position    
+    float aim[]={0.0, 0.0, 0.0}; // Where we look
     float up[]={0.0, 1.0, 0.0}; // Vector pointing over the camera
     lookAt(c, aim, up);
 
@@ -129,6 +129,23 @@ void Camera::move(const bool spherical, const float * const moves, const float *
 
     // Updates in shaders
     this->shaders.setView(this->view, this->c);
+}
+
+
+//______________________________________________________________________________
+// Data using
+
+
+// Puts a position in view space
+void Camera::inView(float * const position) const
+{
+    multMatrixToPoint(position, this->view);
+}
+
+// Puts a position in view space
+const float * const Camera::getCenter() const
+{
+    return this->c;
 }
 
 

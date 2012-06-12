@@ -38,6 +38,7 @@ class Application
         sf::Clock frameClock;           // Clock to measure frame durations
         sf::Time frameDuration;         // Frame time duration
         unsigned int cntFrame;          // Frames counter
+        float dtSimulation;             // Delta of time between simulation updates
 
         // Mouse data
         sf::Vector2i screenCenter;      // Center position of the screen
@@ -101,6 +102,8 @@ class Application
         void setTitle(std::string title);
         void setTestScene();
         void moveScene();
+        void setSimpleFloor();
+        void rotateCamera();
         void setSimulation(); 
 };
 

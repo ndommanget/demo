@@ -25,7 +25,7 @@ void main()
     if (filledData[2]) uvs = vertexUvs;
     if (filledData[3]) localColor = vertexColor;
 
-    gl_PointSize=10;
+    gl_PointSize=15;
 
     gl_Position = projection * view * model * vertexPosition;
 }
@@ -49,10 +49,9 @@ out vec4 fragColor;
 
 void main()
 {
-    vec4 text=vec4(texture(textureUnitDiffuse, gl_PointCoord).rgb, 1.0);
-    float energy=((text.r+text.g+text.b)/3.0)-0.1;
-    
-    fragColor=clamp(energy, 0.0, 1.0)*localColor;
+    vec3 text=texture(textureUnitDiffuse, gl_PointCoord).rgb;
+    float alpha=localColor.a*((text.r+text.g+text.b)/3.0);
+    fragColor=vec4(localColor.rgb*alpha, alpha);
 }
 
 

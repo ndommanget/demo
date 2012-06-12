@@ -68,7 +68,7 @@ class Object
 
         // Updating data on GPU
         void updateVertices(const float * const vertices, bool dynamic=false) const;
-        void updateIndices(const float * const indices, bool dynamic=false) const;
+        void updateIndices(const unsigned int * const indices, bool dynamic=false) const;
         void updateNormals(const float * const normals, bool dynamic=false) const;
         void updateUvs(const float * const uvs, bool dynamic=false) const;
         void updateColors(const float * const colors, bool dynamic=false) const;       

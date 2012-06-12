@@ -28,10 +28,13 @@ void Application::init()
     // Frame Counter
     this->cntFrame=0;
 
-    // Spherical camera
-    this->sphericalCamera=true;
+    // Simulation update dt
+    this->dtSimulation=1.0/100.0;
 
-    this->speed=2.5;
+    // Spherical camera
+    this->sphericalCamera=false;
+
+    this->speed=1.0;
     for (unsigned int i=0 ; i<6 ; ++i)
     {
         this->moveTimes[i]=0.0;
@@ -39,10 +42,10 @@ void Application::init()
     }
     
     // Window size initialization (for windowed mode)
-    this->windowedWidth=800;
-    this->windowedHeight=600;
+    this->windowedWidth=1280;
+    this->windowedHeight=800;
     this->minWindowSize=300;
-    this->fullScreen=true; 
+    this->fullScreen=false; 
 	
     // Mouse position and scroll data initilaization
     // Positions : floats, origin in center, sides at +/-1 or more
@@ -77,7 +80,7 @@ void Application::initSFMLOpenGL()
 {
     // Context parameters :
     // depthBits / stencilBits / antialiasingLevel / major version / minor version  
-    sf::ContextSettings wantedSettings(16, 0, 2, 3, 2);
+    sf::ContextSettings wantedSettings(16, 0, 4, 3, 2);
 
     // Window and context creation
     if (this->fullScreen)
@@ -138,15 +141,17 @@ void Application::customizeStates()
     glEnable(GL_LINE_SMOOTH);
     //glLineWidth(2.0); // Not working on Mac OS X in 3.2 core
 
-    glPointSize(5.0);
+    glPointSize(10.0);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     // Blending function (used for sprites)
-    glBlendFunc(GL_ONE, GL_ONE);
+    //glBlendFunc(GL_ONE, GL_ONE);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Disables culling
     //glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 }
 
 
@@ -260,7 +265,7 @@ void Application::handleKeyEvent(const sf::Event & event, bool down)
             break;
             
             case sf::Keyboard::Space :
-                if (this->simulation!=NULL) this->simulation->update();
+                //if (this->simulation!=NULL) this->simulation->update();
             break;              
             
             default:
@@ -268,6 +273,7 @@ void Application::handleKeyEvent(const sf::Event & event, bool down)
         }
     }
 
+    bool move=false;
     switch(event.key.code)
     {
         // Camera controls
@@ -279,12 +285,14 @@ void Application::handleKeyEvent(const sf::Event & event, bool down)
             //std::cout<<"Right."<<std::endl;
             moveTimes[0]=frameClock.getElapsedTime().asSeconds();
             movePressed[0]=down;
+            move=true;
         break;
         case sf::Keyboard::Left :
         case sf::Keyboard::Q :
             //std::cout<<"Left."<<std::endl;
             moveTimes[1]=frameClock.getElapsedTime().asSeconds();
             movePressed[1]=down;
+            move=true;
         break;
         
         // On y axis :
@@ -292,11 +300,13 @@ void Application::handleKeyEvent(const sf::Event & event, bool down)
             //std::cout<<"Up."<<std::endl;
             moveTimes[2]=frameClock.getElapsedTime().asSeconds();
             movePressed[2]=down;
+            move=true;
         break;
         case sf::Keyboard::PageDown :
             //std::cout<<"Down."<<std::endl;
             moveTimes[3]=frameClock.getElapsedTime().asSeconds();
             movePressed[3]=down;
+            move=true;
         break; 
 
         // On z axis :
@@ -305,17 +315,20 @@ void Application::handleKeyEvent(const sf::Event & event, bool down)
             //std::cout<<"Backward."<<std::endl;
             moveTimes[4]=frameClock.getElapsedTime().asSeconds();
             movePressed[4]=down;
+            move=true;
         break; 
         case sf::Keyboard::Up :
         case sf::Keyboard::Z :
             //std::cout<<"Forward."<<std::endl;
             moveTimes[5]=frameClock.getElapsedTime().asSeconds();
             movePressed[5]=down;
+            move=true;
         break;
 
         default:
         break;
     }
+    if (move) this->moveCamera();
 }
 
 
@@ -377,7 +390,8 @@ void Application::animate()
 
     for (unsigned int i=0 ; i<6 ; ++i) this->moveTimes[i]=0.0;
 
-    //if (this->scene!=NULL) this->moveScene();
+    //this->moveScene();
+    this->rotateCamera();
 }
 
 
@@ -385,12 +399,13 @@ void Application::animate()
 void Application::storeFrame() const
 {
     std::string fileName="../images/render";
-    char iChar[]={0, 0, 0, 0};
+    char iChar[]={0, 0, 0, 0, 0};
 
     sprintf(iChar, "%d", this->cntFrame);
-    if (this->cntFrame<10)   fileName+="0";
-    if (this->cntFrame<100)  fileName+="0";
-	if (this->cntFrame<1000) fileName+="0";
+    if (this->cntFrame<10)    fileName+="0";
+    if (this->cntFrame<100)   fileName+="0";
+	if (this->cntFrame<1000)  fileName+="0";
+    if (this->cntFrame<10000) fileName+="0";
 	fileName+=iChar;
 	fileName+=".ppm";
 
@@ -621,8 +636,9 @@ void Application::setTestScene()
        
     // The earth plane
     unsigned int planeID=scene.addObjectToDraw(storedObjectT0ID);
-    float dryEarth[]={0.85, 0.84, 0.80, 1.0};
-    scene.setDrawnObjectColor(planeID, dryEarth);
+    //float dryEarth[]={0.85, 0.84, 0.80, 1.0};
+    float pink[]={1.0, 0.5, 0.5, 1.0};
+    scene.setDrawnObjectColor(planeID, pink);
     
     // The sun
     unsigned int sphereID=scene.addObjectToDraw(storedObjectT1ID);
@@ -694,27 +710,82 @@ void Application::moveScene()
 }
 
 
+// Sets a simple textured floor
+void Application::setSimpleFloor()
+{
+    // An horizontal square plane
+    Object * objectT0=new Object(GL_TRIANGLES);
+    buildPlane(*objectT0, 200.0, 200.0);
+    unsigned int storedObjectT0ID=scene.storeObject(objectT0);
+
+    // The earth plane
+    unsigned int floorID=scene.addObjectToDraw(storedObjectT0ID);
+
+    // Dark wooden
+    unsigned int floorTextureDiffuseID=loadTexture("../textures/tileable_wood_texture_01_by_goodtextures-d31qde8Diffuse.ppm", true);
+    unsigned int floorTextureSpecularID=loadTexture("../textures/tileable_wood_texture_01_by_goodtextures-d31qde8Specular.ppm", true);
+
+    scene.setDrawnObjectShader(floorID, shaders.getLightingTexturingShader());
+    scene.setDrawnObjectTextureID(floorID, 0, floorTextureDiffuseID);
+    scene.setDrawnObjectTextureID(floorID, 1, floorTextureSpecularID);
+
+    float l[]={-1.0, 5.0, 0.0, 1.0};
+    float lightPower=1.0;
+    scene.setLight(l, lightPower);
+
+    /*Object * objectT1=new Object(GL_TRIANGLES);
+    float radius=0.1; unsigned int discLong=40; unsigned int discLat=20;
+    buildSphere_TrSmoothNonRed(*objectT1, radius, discLat, discLong);
+    unsigned int storedObjectT1ID=scene.storeObject(objectT1);
+    unsigned int sphereID=scene.addObjectToDraw(storedObjectT1ID);
+    float T1[16]; float t1[3]={l[0], l[1], l[2]}; setToTranslate(T1, t1);
+    scene.setDrawnObjectModel(sphereID, T1);
+    float white[]={1.0, 1.0, 1.0, 1.0};
+    scene.setDrawnObjectColor(sphereID, white);*/
+
+}
+
+
+// Animates a rotational camera
+void Application::rotateCamera()
+{
+    //float dt=this->globalDuration.asSeconds();
+    float dt=this->dtSimulation*cntFrame;
+    float rotationalSpeed=M_PI/3.0; // radians per seconds
+    float a=rotationalSpeed*dt-M_PI/2.0;
+
+    float dist=3.0;
+    float c[]={dist*cos(a), 1.0, -dist*sin(a)}; // Camera position    
+    float aim[]={0.0, 1.0, 0.0}; // Where we look
+    float up[]={0.0, 1.0, 0.0}; // Vector pointing over the camera
+    this->camera.lookAt(c, aim, up);
+}
+
+
 // Set the simulation to happen
 void Application::setSimulation()
-{
-    const bool surface=true;     
+{    
     const float size=3.0;
     const float density=1000.0;
     const float viscosity=0.0;
     unsigned int nbSamplesOneDir=40; 
-    const unsigned int nbSamplesX=nbSamplesOneDir; 
-    //const unsigned int nbSamplesY=nbSamplesOneDir;
-    const unsigned int nbSamplesY=nbSamplesOneDir*this->height/this->width;
-    unsigned int nbSamplesZ=nbSamplesOneDir;
 
-    const unsigned int nbParticlesCoef=3; // On surface, nbSamples*4^nbParticlesCoefs particles 
+    const unsigned int nbSamplesX=nbSamplesOneDir;
+
+    //const unsigned int nbSamplesY=nbSamplesOneDir*this->height/this->width;
+    const unsigned int nbSamplesY=nbSamplesOneDir/2;
+
+    const unsigned int nbSamplesZ=nbSamplesOneDir/3;
+
+    const unsigned int nbParticlesCoef=2; // On surface, nbSamples*4^nbParticlesCoefs particles 
                               // In volume,  nbSamples*6^nbParticlesCoefs particles
     const bool solidWalls=true;
 
-    this->simulation=new Simulation(scene, shaders, shaders.getLightingShader(), shaders.getSpriteShader(), surface, size, solidWalls, density, viscosity, nbSamplesX, nbSamplesY, nbSamplesZ, nbParticlesCoef);
+    this->simulation=new Simulation(shaders, camera, scene, shaders.getLightingShader(), shaders.getSpriteShader(), size, solidWalls, density, viscosity, this->dtSimulation, nbSamplesX, nbSamplesY, nbSamplesZ, nbParticlesCoef);
 
-    unsigned int drawnIDs[9];
+    unsigned int drawnIDs[10];
     unsigned int i=0;
+    drawnIDs[i++]=this->simulation->drawSolids();
     //drawnIDs[i++]=this->simulation->drawSamples();
     //drawnIDs[i++]=this->simulation->drawPressures();
     //drawnIDs[i++]=this->simulation->drawForces();
@@ -726,10 +797,10 @@ void Application::setSimulation()
     //drawnIDs[i++]=this->simulation->drawParticlesVelocities();
     unsigned int n=i;
 
-    float t[]={0.0, 1.5, 0.0};
+    float t[]={0.0, 1.0, 0.0};
     float T[16]; setToTranslate(T, t);
 
     for (unsigned int i=0 ; i<n ; ++i)
         this->scene.setDrawnObjectModel(drawnIDs[i], T);
-
+    this->simulation->setModel(T);
 }

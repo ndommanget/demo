@@ -53,6 +53,10 @@ class Camera
         void lookAt(const float * const c, const float * const aim, const float * const up);
         void move(const bool spherical, const float * const moves, const float * const angles, float radius);
 
+        // Data using
+        void inView(float * const position) const;
+        const float * const getCenter() const;
+
         // Projection set-up
         void setProjectionData(float left, float right, float bottom, float top, float near, float far);
         void switchCameraProjection();

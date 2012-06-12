@@ -20,6 +20,17 @@
 // Mathematics : vectors
 
 
+// To get the distance between two points (square distance if square==true)
+float distance(const float * const A, const float * const B, bool square)
+{
+    float distance=(B[0]-A[0])*(B[0]-A[0])
+                  +(B[1]-A[1])*(B[1]-A[1])
+                  +(B[2]-A[2])*(B[2]-A[2]);
+    if (!square) distance=sqrt(distance);
+    return distance;
+}
+
+
 // To get the norm of a vector
 float getNorm (const float * const a)
 {
@@ -40,12 +51,33 @@ void normalize (float * const a)
 }
 
 
+// To get the dot product
+float dotProduct(const float * const a, const float * const b)
+{
+    float result=0.0;
+    for (unsigned int iCoord=0 ; iCoord<3 ; ++iCoord)
+    {
+        result+=a[iCoord]*b[iCoord];
+    }
+    return result;
+}
+
+
 // To get the vector product
 void vectorProduct (const float * const a, const float * const b, float * const result)
 {
 	result[0]=a[1]*b[2]-a[2]*b[1];
 	result[1]=a[2]*b[0]-a[0]*b[2];
 	result[2]=a[0]*b[1]-a[1]*b[0];
+}
+
+
+// To get the triple product
+float scalarTriple(const float * const a, const float * const b, const float * const c)
+{
+    float result[4];
+    vectorProduct(b, c, result);
+    return dotProduct(a, result);
 }
 
 
@@ -198,6 +230,61 @@ void multMatrixBtoMatrixA(float * const A, const float * const B)
 }
 
 
+// Multiplies a matrix to a point
+void multMatrixToPoint(float * const pos, const float * const mat)
+{
+    float newPos[4];
+    newPos[0]=pos[0]*mat[0]+pos[1]*mat[4]+pos[2]*mat[8] +pos[3]*mat[12];
+    newPos[1]=pos[0]*mat[1]+pos[1]*mat[5]+pos[2]*mat[9] +pos[3]*mat[13];
+    newPos[2]=pos[0]*mat[2]+pos[1]*mat[6]+pos[2]*mat[10]+pos[3]*mat[14];
+    newPos[3]=pos[0]*mat[3]+pos[1]*mat[7]+pos[2]*mat[11]+pos[3]*mat[15];
+    pos[0]=newPos[0];
+    pos[1]=newPos[1];
+    pos[2]=newPos[2];
+    if (pos[3]!=0.0)
+    {
+        pos[0]/=newPos[3];
+        pos[1]/=newPos[3];
+        pos[2]/=newPos[3];
+    }
+}
+
+
+// To get an inversed matrix
+void getInverseMatrix(const float * const M, float * const Mm1)
+{
+    Mm1[0]  =  M[5]*M[10]*M[15] - M[5]*M[14]*M[11] - M[6]*M[9]*M[15] + M[6]*M[13]*M[11] + M[7]*M[9]*M[14] - M[7]*M[13]*M[10];
+    Mm1[1]  = -M[1]*M[10]*M[15] + M[1]*M[14]*M[11] + M[2]*M[9]*M[15] - M[2]*M[13]*M[11] - M[3]*M[9]*M[14] + M[3]*M[13]*M[10];
+    Mm1[2]  =  M[1]*M[6]*M[15]  - M[1]*M[14]*M[7]  - M[2]*M[5]*M[15] + M[2]*M[13]*M[7]  + M[3]*M[5]*M[14] - M[3]*M[13]*M[6];
+    Mm1[3]  = -M[1]*M[6]*M[11]  + M[1]*M[10]*M[7]  + M[2]*M[5]*M[11] - M[2]*M[9]*M[7]   - M[3]*M[5]*M[10] + M[3]*M[9]*M[6];
+    Mm1[4]  = -M[4]*M[10]*M[15] + M[4]*M[14]*M[11] + M[6]*M[8]*M[15] - M[6]*M[12]*M[11] - M[7]*M[8]*M[14] + M[7]*M[12]*M[10];
+    Mm1[5]  =  M[0]*M[10]*M[15] - M[0]*M[14]*M[11] - M[2]*M[8]*M[15] + M[2]*M[12]*M[11] + M[3]*M[8]*M[14] - M[3]*M[12]*M[10];
+    Mm1[6]  = -M[0]*M[6]*M[15]  + M[0]*M[14]*M[7]  + M[2]*M[4]*M[15] - M[2]*M[12]*M[7]  - M[3]*M[4]*M[14] + M[3]*M[12]*M[6];
+    Mm1[7]  =  M[0]*M[6]*M[11]  - M[0]*M[10]*M[7]  - M[2]*M[4]*M[11] + M[2]*M[8]*M[7]   + M[3]*M[4]*M[10] - M[3]*M[8]*M[6];
+    Mm1[8]  =  M[4]*M[9]*M[15]  - M[4]*M[13]*M[11] - M[5]*M[8]*M[15] + M[5]*M[12]*M[11] + M[7]*M[8]*M[13] - M[7]*M[12]*M[9];
+    Mm1[9]  = -M[0]*M[9]*M[15]  + M[0]*M[13]*M[11] + M[1]*M[8]*M[15] - M[1]*M[12]*M[11] - M[3]*M[8]*M[13] + M[3]*M[12]*M[9];
+    Mm1[10] =  M[0]*M[5]*M[15]  - M[0]*M[13]*M[7]  - M[1]*M[4]*M[15] + M[1]*M[12]*M[7]  + M[3]*M[4]*M[13] - M[3]*M[12]*M[5];
+    Mm1[11] = -M[0]*M[5]*M[11]  + M[0]*M[9]*M[7]   + M[1]*M[4]*M[11] - M[1]*M[8]*M[7]   - M[3]*M[4]*M[9]  + M[3]*M[8]*M[5];
+    Mm1[12] = -M[4]*M[9]*M[14]  + M[4]*M[13]*M[10] + M[5]*M[8]*M[14] - M[5]*M[12]*M[10] - M[6]*M[8]*M[13] + M[6]*M[12]*M[9];
+    Mm1[13] =  M[0]*M[9]*M[14]  - M[0]*M[13]*M[10] - M[1]*M[8]*M[14] + M[1]*M[12]*M[10] + M[2]*M[8]*M[13] - M[2]*M[12]*M[9];
+    Mm1[14] = -M[0]*M[5]*M[14]  + M[0]*M[13]*M[6]  + M[1]*M[4]*M[14] - M[1]*M[12]*M[6]  - M[2]*M[4]*M[13] + M[2]*M[12]*M[5];
+    Mm1[15] =  M[0]*M[5]*M[10]  - M[0]*M[9]*M[6]   - M[1]*M[4]*M[10] + M[1]*M[8]*M[6]   + M[2]*M[4]*M[9]  - M[2]*M[8]*M[5];   
+
+    float det = M[0]*Mm1[0] + M[4]*Mm1[1] + M[8]*Mm1[2] + M[12]*Mm1[3];
+    for (unsigned int i=0; i<16; ++i)
+        Mm1[i]=Mm1[i]/det;
+}
+
+
+// To get a tranposed matrix
+void getTransposedMatrix(const float * const M, float * const Mt)
+{
+    for (unsigned int iLines=0 ; iLines<4 ; ++iLines)
+        for (unsigned int iColumn=0 ; iColumn<4 ; ++iColumn)
+            Mt[iLines*4+iColumn]=M[iColumn*4+iLines];
+}
+
+
 //______________________________________________________________________________
 // Mathematics : interpolation
 
@@ -324,7 +411,7 @@ void printGLErrors()
 
 
 // Loads a simple texture
-unsigned int loadTexture(const std::string &fileName)
+unsigned int loadTexture(const std::string &fileName, bool mipmapping)
 {
     unsigned int  w;
     unsigned int  h;
@@ -338,16 +425,37 @@ unsigned int loadTexture(const std::string &fileName)
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     // How to handle not normalised uvs
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // How to handle interpolation from texels to fragments
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Specifies which image will be used for this texture objet
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    
     delete [] data;
+
+    // Generates mipmaps and does settings for mipmap mode
+    if (mipmapping)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 8);         
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, GL_TEXTURE_MIN_LOD);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, GL_TEXTURE_MAX_LOD);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    }
+
+    // Anisotropic filtering
+    //if ("GL_EXT_texture_filter_anisotropic")
+    //{
+        float fLargest;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+    //}
 
     return textureID;
 }

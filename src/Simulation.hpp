@@ -22,25 +22,27 @@ class Simulation
      private:
 
         // General data
-        Scene & scene;                      // Scene in which to draw the simulation
         const Shaders & shaders;            // Shaders to use for rendering
+        Camera & camera;                    // Camera used to view the simulation
+        Scene & scene;                      // Scene in which to draw the simulation       
         const unsigned int defaultShader;   // Shader used for test rendering
         const unsigned int spriteShader;    // Shader used for particles
         MTRand * rand;                      // Mersenne-Twister random generator
 
         // Geometric parameters
-        const bool surface;                 // True if 2D simulation
         const float size;                   // Width of the grid
-        float h;                            // Cell side length (square or cubes)
+        float h;                            // Cell side length
         float offset[3];                    // Start point left/bottom/back of the grid
         float offsetInCell;                 // Offset from left/bottom/back of grid cell
         const bool solidWalls;              // True if grid boundary is expected to be solid
         float vectorScale;                  // Scale coefficient to display vector lengths
+        float model[16];                    // Model matrix for the simulation
         
         // Simulation parameters
         const float density;                // Expected density for the fluid
         const float viscosity;              // Expected viscosity for the fluid
         float g[3];                         // Vector of acceleration due to gravity
+        float dt;                           // Delta of time between updates
 
         // About the data stored on centers of the MAC grid
         const unsigned int nbSamplesX;      // Samples number on X axis
@@ -70,6 +72,7 @@ class Simulation
         float * particles;                  // Particle positions
         float * particleColors;             // Grid interpolated particles colors
         float * particleVelocities;         // Grid interpolated particles velocities
+        std::vector<unsigned int> particleIndices; // Indices to draw depth sorted particles
         
         // Objects for OpenGL checking and visualization
         Object * objectSamples;             // To render samples as positions and colors
@@ -81,6 +84,7 @@ class Simulation
         Object * objectVelocitiesBorders;   // To render velocities components as colors
         Object * objectParticles;           // To render particles as positions and colors 
         Object * objectParticleVelocities;  // To render particles interpolated velocities as vectors and colors
+        Object * objectSolids;              // To render solids boundaries
 
         
         
@@ -102,6 +106,7 @@ class Simulation
         void buildVelocitiesCenters();
         void buildParticles();
         void buildParticleVelocities();
+        void buildSolids();
         
         // Interpolation
         void interpolateFromCenters(const float * const data, const float * const position, float * const result);
@@ -114,38 +119,51 @@ class Simulation
         void getCell(const float * const pos, int * const iX, int * const iY, int * const iZ);
         
         // System resolution
-        void MICPreconditioner(const double * const Adiag, const double * const Aright, const double * const Atop, Eigen::VectorXd  & precon);
-        void applyPreconditioner(const double * const Aright, const double * const Atop, const Eigen::VectorXd & precon, const Eigen::VectorXd & r, Eigen::VectorXd & z);
-        void multiplySparseMatrix(const double * const Adiag, const double * const Aright, const double * const Atop, const Eigen::VectorXd & v, Eigen::VectorXd & result);
-        void conjugateGradient(const double * const Adiag, const double * const Aright, const double * const Atop, const double * const b);
+        void MICPreconditioner(const double * const Adiag, const double * const Aright, const double * const Atop, const double * const Afront, Eigen::VectorXd  & precon);
+        void applyPreconditioner(const double * const Aright, const double * const Atop, const double * const Afront, const Eigen::VectorXd & precon, const Eigen::VectorXd & r, Eigen::VectorXd & z);
+        void multiplySparseMatrix(const double * const Adiag, const double * const Aright, const double * const Atop, const double * const Afront, const Eigen::VectorXd & v, Eigen::VectorXd & result);
+        void conjugateGradient(const double * const Adiag, const double * const Aright, const double * const Atop, const double * const Afront, const double * const b);
         void setDivergences(double * const divergences);
 
         // Main steps
-        void advectColors(float dt);
+        void advectColors();
         void updateVelocitiesFromBorders();
         void updateVelocitiesFromCenters(const float * const centeredVel);
-        void advectVelocities(float dt);
-        void applyForces(float dt);
-        void project(float dt);
-        void advectParticles(float dt);
+        void advectVelocities();
+        void applyForces();
+        void project();
+        void advectParticles();
+
+        struct compareParticlesDepth
+        { 
+            float * distances;
+            compareParticlesDepth(float * distances) : distances(distances){}
+            bool operator()(unsigned int i0, unsigned int i1)
+            { return (distances[i0]>distances[i1]); }
+        };
 
     public:
 
         // Constructors / destructor
-        Simulation(Scene & scene,
-                   const Shaders & shaders,
+        Simulation(const Shaders & shaders,
+                   Camera & camera,
+                   Scene & scene,
                    const unsigned int defaultShader=0, 
                    const unsigned int spriteShader=2,
-                   const bool surface=true, 
                    const float size=2.0, 
                    const bool solidWalls=true,
                    const float density=1000.0, 
-                   const float viscosity=0.0, 
+                   const float viscosity=0.0,
+                   const float dt=0.001, 
                    const unsigned int nbSamplesX=10, 
                    const unsigned int nbSamplesY=10, 
-                   unsigned int nbSamplesZ=1, 
+                   const unsigned int nbSamplesZ=1, 
                    const unsigned int nbParticlesCoef=1);
         ~Simulation();
+
+
+        // Setters/ getters
+        void setModel(const float * const model);
 
         // Drawing set-up
         unsigned int drawSamples();
@@ -157,11 +175,13 @@ class Simulation
         unsigned int drawVelocitiesCenters();
         unsigned int drawParticles();
         unsigned int drawParticlesVelocities();
+        unsigned int drawSolids();
 
         // Main actions
         void update();
         void render();
 };
 
+//bool particleSorting(unsigned int i0, unsigned int i1);
 
 #endif // __SIMULATION_HPP__

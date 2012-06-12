@@ -17,7 +17,7 @@
 void Scene::setAppearance(unsigned int indexDrawnObject) const
 {
     // If sprite shader, transparency is expected
-    if (this->shaders.isTransparent(drawnObjectsShaders[indexDrawnObject]))
+    if (drawnObjectsTransparencies[indexDrawnObject])
     {
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -69,6 +69,7 @@ Scene::~Scene()
     delete [] this->storedObjects;
     delete [] this->drawnObjects;
     delete [] this->drawnObjectsColors;
+    delete [] this->drawnObjectsTransparencies;
     delete [] this->drawnObjectsModels;
     delete [] this->drawnObjectsShaders;
     delete [] this->drawnObjectsTexture0IDs;
@@ -96,6 +97,7 @@ void Scene::init()
     this->storedObjects=new const Object * [this->maxStoredObjects];
     this->drawnObjects=new unsigned int[this->maxDrawnObjects];
     this->drawnObjectsColors=new float[this->maxDrawnObjects*4];
+    this->drawnObjectsTransparencies=new bool[this->maxDrawnObjects];
     this->drawnObjectsModels=new float[this->maxDrawnObjects*16];
     this->drawnObjectsShaders=new unsigned int[this->maxDrawnObjects];
     this->drawnObjectsTexture0IDs=new unsigned int[this->maxDrawnObjects];
@@ -103,19 +105,21 @@ void Scene::init()
            
     // Default color
     float grey[16]={0.2, 0.2, 0.2, 1.0}; setDefaultColor(grey);
+    // Default transparency flag
+    setDefaultTransparency(false);
     // Default model
     float I[16]; setToIdentity(I); setDefaultModel(I);
     // Default shader ID
-    setDefaultShader(1);
+    setDefaultShader(0);
     // Default texture ID   
-    setDefaultTextureID(1);
+    setDefaultTextureIDs(0, 0);
     
      // Initalisation of storedObjects
     for (unsigned int iStoredObjects=0 ; iStoredObjects<this->maxStoredObjects ; ++iStoredObjects)
         this->storedObjects[iStoredObjects]=NULL;
         
     // Light creation
-    float lightPosition[]={0.0, 5.0, 0.0, 1.0}; float lightPower=1.0;
+    float lightPosition[]={0.0, 4.0, 0.0, 1.0}; float lightPower=1.0;
     this->setLight(lightPosition, lightPower);
 
     // Default shader
@@ -156,8 +160,8 @@ unsigned int  Scene::addObjectToDraw(unsigned int indexStoredObject)
         setDrawnObjectColor(this->nbDrawnObjects, this->defaultColor);
         setDrawnObjectModel(this->nbDrawnObjects, this->defaultModel);
         setDrawnObjectShader(this->nbDrawnObjects, this->defaultShader);
-        setDrawnObjectTextureID(this->nbDrawnObjects, 0, this->defaultTextureID);
-        setDrawnObjectTextureID(this->nbDrawnObjects, 1, this->defaultTextureID);
+        setDrawnObjectTextureID(this->nbDrawnObjects, 0, this->defaultTexture0ID);
+        setDrawnObjectTextureID(this->nbDrawnObjects, 1, this->defaultTexture1ID);
         
 		//std::cout<<"Object "<<this->nbDrawnObjects<<" to draw."<<std::endl;
 		this->nbDrawnObjects++;
@@ -171,7 +175,7 @@ unsigned int  Scene::addObjectToDraw(unsigned int indexStoredObject)
 
 
 //______________________________________________________________________________
-// Default set-up
+// Default setters / getters
 
 
 // Sets default color
@@ -180,8 +184,18 @@ void Scene::setDefaultColor(const float * const defaultColor)
     for (unsigned int iCoord=0 ; iCoord<4 ; ++iCoord)
         this->defaultColor[iCoord]=defaultColor[iCoord];
 
-    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxStoredObjects ; ++iDrawnObjects)
+    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxDrawnObjects ; ++iDrawnObjects)
         setDrawnObjectColor(iDrawnObjects, this->defaultColor);
+}
+
+
+// Sets default transparency
+void Scene::setDefaultTransparency(bool defaultTransparency)
+{
+    this->defaultTransparency=defaultTransparency;
+
+    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxDrawnObjects ; ++iDrawnObjects)
+        setDrawnObjectTransparency(iDrawnObjects, this->defaultTransparency);
 }
 
 
@@ -191,7 +205,7 @@ void Scene::setDefaultModel(const float * const defaultModel)
     for (unsigned int iMatrixCoord=0 ; iMatrixCoord<16 ; ++iMatrixCoord)
         this->defaultModel[iMatrixCoord]=defaultModel[iMatrixCoord];
 
-    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxStoredObjects ; ++iDrawnObjects)
+    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxDrawnObjects ; ++iDrawnObjects)
         setDrawnObjectModel(iDrawnObjects, this->defaultModel);
 }
 
@@ -200,18 +214,28 @@ void Scene::setDefaultModel(const float * const defaultModel)
 void Scene::setDefaultShader(unsigned int defaultShader)
 {
     this->defaultShader=defaultShader;
+
+    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxDrawnObjects ; ++iDrawnObjects)
+        setDrawnObjectShader(iDrawnObjects, this->defaultShader);
 }
 
 
 // Sets default texture ID
-void Scene::setDefaultTextureID(unsigned int defaultTextureID)
+void Scene::setDefaultTextureIDs(unsigned int defaultTexture0ID, unsigned int defaultTexture1ID)
 {
-    this->defaultTextureID=defaultTextureID;
+    this->defaultTexture0ID=defaultTexture0ID;
+    this->defaultTexture1ID=defaultTexture0ID;
+
+    for (unsigned int iDrawnObjects=0 ; iDrawnObjects<this->maxDrawnObjects ; ++iDrawnObjects)
+    {
+        this->drawnObjectsTexture0IDs[iDrawnObjects]=this->defaultTexture0ID;
+        this->drawnObjectsTexture1IDs[iDrawnObjects]=this->defaultTexture1ID; 
+    }  
 }
 
 
 //______________________________________________________________________________
-// Drawn objects set-up
+// Drawn objects setters / getters
 
 
 // Sets the color for the drawn object of index indexDrawObject
@@ -219,6 +243,13 @@ void Scene::setDrawnObjectColor(unsigned int indexDrawnObject, const float * con
 {
     for (unsigned int iColorComp=0 ; iColorComp<4 ; ++iColorComp)
         this->drawnObjectsColors[(indexDrawnObject*4)+iColorComp]=color[iColorComp];
+}
+
+
+// Sets the transparency flag for the drawn object of index indexDrawObject
+void Scene::setDrawnObjectTransparency(unsigned int indexDrawnObject, bool transparency)
+{
+    this->drawnObjectsTransparencies[indexDrawnObject]=transparency;
 }
 
 
@@ -247,7 +278,7 @@ void Scene::setDrawnObjectTextureID(unsigned int indexDrawnObject, unsigned int 
  
 
 //______________________________________________________________________________
-// Light set-up
+// Light setters / getters
 
 
 // Sets light data to use in shader

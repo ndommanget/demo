@@ -48,16 +48,16 @@ out vec4 fragColor;
 
 void main()
 {
-    vec4 diffuseColor=vec4(1.0);
-    vec4 specularColor=vec4(1.0);
+    vec4 diffuse=vec4(1.0);
+    vec4 specular=vec4(1.0);
     if (filledData[2])
     {
-        diffuseColor=vec4(texture(textureUnitDiffuse, uvs).rgb, 1.0);
-        specularColor=vec4(texture(textureUnitSpecular, uvs).rgb, 1.0);
+        diffuse=vec4(texture(textureUnitDiffuse, uvs).rgb, 1.0);
+        specular=vec4(texture(textureUnitSpecular, uvs).rgb, 1.0);
     }
     
     // If no normal
-    if (!filledData[1]) fragColor = diffuseColor;
+    if (!filledData[1]) fragColor==vec4(diffuse.rgb*diffuse.a, diffuse.a);
     else
     {
         vec4 L=normalize(light.position); // Direction of light from fragment -> light.position[3]==0.0 : Directional light
@@ -65,15 +65,33 @@ void main()
         vec4 V=normalize(center-position); // Direction from fragment to camera center
         vec4 R=normalize(reflect(-L, normal)); // Direction of reflected light beam, from fragment
         vec4 N=normalize(normal); // Normal
-    
-        float ambientValue=light.power;
-        float diffuseValue=light.power * max( dot(L, N), 0.0);
-        float specularValue=light.power * pow( max(dot(R, V), 0.0), material.shininess);
-        vec4 ambientContribution=vec4(ambientValue*material.ka*material.ambient.rgb, material.ambient.a);
-        vec4 diffuseContribution=vec4(diffuseValue*material.kd*diffuseColor.rgb, material.diffuse.a);
-        vec4 specularContribution=vec4(specularValue*material.ks*specularColor.rgb, material.specular.a);
-  
-        fragColor = ambientContribution + diffuseContribution + specularContribution;
+
+        float lightPower=light.power;
+        // If spot to the center
+        vec4 spotLightDir=vec4(normalize(vec3(0.0, 0.0, 0.0)-light.position.xyz), 1.0);
+        float dot=dot(spotLightDir, -L);
+        float cutOffMax=0.99;
+        float cutOffMin=0.92;
+        if (dot<cutOffMax)
+        { 
+            float decay=0.3;
+            float coef=decay;
+            if (dot>cutOffMin)
+                coef=(0.5*cos((cutOffMax-dot)/(cutOffMax-cutOffMin)*3.14)-0.5)*(1.0-decay)+1.0;
+            lightPower=coef*lightPower;
+        }
+
+        float ambientValue=lightPower;
+        float diffuseValue=lightPower * max( dot(L, N), 0.0);
+        float specularValue=lightPower * pow( max(dot(R, V), 0.0), material.shininess);
+
+        vec3 ambientContribution=ambientValue*material.ka*material.ambient.rgb*material.ambient.a;
+        vec3 diffuseContribution=diffuseValue*material.kd*diffuse.rgb*diffuse.a;
+        vec3 specularContribution=specularValue*material.ks*material.specular.rgb*material.specular.a;
+
+        float alpha=(material.ambient.a*material.ka+diffuse.a*material.kd+material.specular.a*material.ks)/(material.ka+material.kd+material.ks);
+
+        fragColor=vec4(ambientContribution+diffuseContribution+specularContribution, alpha);
     }
 }
 

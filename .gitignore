@@ -1,6 +1,6 @@
 # All this should be ignored at commit.
-videos/
-images/
+videos/*
+images/*
 src/*.[od]
 src/*~
 src/Demo

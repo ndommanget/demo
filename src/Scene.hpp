@@ -24,9 +24,11 @@ class Scene
         
         // Default drawing set-up
         float defaultColor[4];                  // Default color
+        bool defaultTransparency;               // Default transparency flag
         float defaultModel[16];                 // Default transformation matrix
         unsigned int defaultShader;             // Default shader
-        unsigned int defaultTextureID;          // Default textureID
+        unsigned int defaultTexture0ID;          // Default textureID (unit 0)
+        unsigned int defaultTexture1ID;          // Default textureID (unit 1)       
 
         // Light
         float lightPosition[4];                 // Position of the light used in shader
@@ -45,6 +47,7 @@ class Scene
         // Drawn instances of objects
         unsigned int * drawnObjects;            // Drawn object library indices
         float * drawnObjectsColors;             // Drawn object colors
+        bool * drawnObjectsTransparencies;             // Drawn object colors
         float * drawnObjectsModels;             // Drawn object transformation matrices
         unsigned int * drawnObjectsShaders;     // Drawn object shader ID 
         unsigned int * drawnObjectsTexture0IDs; // Drawn object shader ID on unit 0
@@ -69,17 +72,19 @@ class Scene
         unsigned int storeObject(const Object * const object);
         unsigned int addObjectToDraw(unsigned int indexStoredObject);
 
-        // Default set-up
+        // Default setters / getters
         void setDefaultColor(const float * const defaultColor);
+        void setDefaultTransparency(bool defaultTransparency);
         void setDefaultModel(const float * const defaultModel);
         void setDefaultShader(unsigned int defaultShader);
-        void setDefaultTextureID(unsigned int defaultTextureID);
+        void setDefaultTextureIDs(unsigned int defaultTexture0ID, unsigned int defaultTexture1ID);
 
-        // Drawn objects set-up
+        // Drawn objects setters / getters
         void setDrawnObjectColor(unsigned int indexDrawnObject, const float * const color);
+        void setDrawnObjectTransparency(unsigned int indexDrawnObject, bool transparency);
         void setDrawnObjectModel(unsigned int indexDrawnObject, const float * const model);
         void setDrawnObjectShader(unsigned int indexDrawnObject, unsigned int shader);
-        void setDrawnObjectTextureID(unsigned int indexDrawnObject, unsigned int textureUnit, unsigned int textureID);  
+        void setDrawnObjectTextureID(unsigned int indexDrawnObject, unsigned int textureUnit, unsigned int textureID);
 
         // Light set-up
         void setLight(const float * const position, float power);

@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     // Application content definition
 
     application->setTitle("Fluid simulation");
-    application->setTestScene();
+    application->setSimpleFloor();
     application->setSimulation();
 
     //__________________________________________________________________________  

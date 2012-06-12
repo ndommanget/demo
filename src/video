@@ -8,6 +8,6 @@ do
     ppm2tiff $i $x.tif
 done
 
-ffmpeg -r 30 -b 2048 -sameq -i $IMG_DIR/render%4d.tif $VIDEO_DIR/$1.mp4
+ffmpeg -r 30 -b 2048 -sameq -i $IMG_DIR/render%5d.tif $VIDEO_DIR/$1.mp4
 
 rm -r $IMG_DIR/*
